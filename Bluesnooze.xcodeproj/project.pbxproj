@@ -11,6 +11,10 @@
 		4F229AC0243CC29600B1784C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4F229ABF243CC29600B1784C /* Assets.xcassets */; };
 		4F229AC3243CC29600B1784C /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4F229AC1243CC29600B1784C /* MainMenu.xib */; };
 		F8A11C7728A9A4C5003A156B /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = F8A11C7628A9A4C5003A156B /* LaunchAtLogin */; };
+		A10000000000000000000002 /* PowerPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* PowerPolicy.swift */; };
+		A10000000000000000000004 /* PowerPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* PowerPolicyTests.swift */; };
+		A10000000000000000000011 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* XCTest.framework */; };
+		A10000000000000000000012 /* PowerPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* PowerPolicy.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +25,10 @@
 		4F229AC4243CC29600B1784C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4F229AC5243CC29600B1784C /* Bluesnooze.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Bluesnooze.entitlements; sourceTree = "<group>"; };
 		4F229ACB243CC72800B1784C /* Bluesnooze-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bluesnooze-Bridging-Header.h"; sourceTree = "<group>"; };
+		A10000000000000000000001 /* PowerPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerPolicy.swift; sourceTree = "<group>"; };
+		A10000000000000000000003 /* PowerPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerPolicyTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000005 /* BluesnoozeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BluesnoozeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000010 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +40,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A10000000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000011 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -39,6 +55,7 @@
 			isa = PBXGroup;
 			children = (
 				4F229ABC243CC29500B1784C /* Bluesnooze */,
+				A10000000000000000000006 /* BluesnoozeTests */,
 				4F229ABB243CC29500B1784C /* Products */,
 				4FDC9C0D243DCB7B00FB0C4E /* Frameworks */,
 			);
@@ -48,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				4F229ABA243CC29500B1784C /* Bluesnooze.app */,
+				A10000000000000000000005 /* BluesnoozeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -56,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				4F229ABD243CC29500B1784C /* AppDelegate.swift */,
+				A10000000000000000000001 /* PowerPolicy.swift */,
 				4F229ABF243CC29600B1784C /* Assets.xcassets */,
 				4F229AC1243CC29600B1784C /* MainMenu.xib */,
 				4F229AC4243CC29600B1784C /* Info.plist */,
@@ -68,8 +87,17 @@
 		4FDC9C0D243DCB7B00FB0C4E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A10000000000000000000010 /* XCTest.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000006 /* BluesnoozeTests */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000003 /* PowerPolicyTests.swift */,
+			);
+			path = BluesnoozeTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -98,6 +126,23 @@
 			productReference = 4F229ABA243CC29500B1784C /* Bluesnooze.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A10000000000000000000007 /* BluesnoozeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000000000000000000000D /* Build configuration list for PBXNativeTarget "BluesnoozeTests" */;
+			buildPhases = (
+				A10000000000000000000008 /* Sources */,
+				A10000000000000000000009 /* Frameworks */,
+				A1000000000000000000000A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BluesnoozeTests;
+			productName = BluesnoozeTests;
+			productReference = A10000000000000000000005 /* BluesnoozeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -111,6 +156,9 @@
 					4F229AB9243CC29500B1784C = {
 						CreatedOnToolsVersion = 11.1;
 						LastSwiftMigration = 1110;
+					};
+					A10000000000000000000007 = {
+						CreatedOnToolsVersion = 27.2;
 					};
 				};
 			};
@@ -131,6 +179,7 @@
 			projectRoot = "";
 			targets = (
 				4F229AB9243CC29500B1784C /* Bluesnooze */,
+				A10000000000000000000007 /* BluesnoozeTests */,
 			);
 		};
 /* End PBXProject section */
@@ -142,6 +191,13 @@
 			files = (
 				4F229AC0243CC29600B1784C /* Assets.xcassets in Resources */,
 				4F229AC3243CC29600B1784C /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000000000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,6 +247,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				4F229ABE243CC29500B1784C /* AppDelegate.swift in Sources */,
+				A10000000000000000000002 /* PowerPolicy.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000004 /* PowerPolicyTests.swift in Sources */,
+				A10000000000000000000012 /* PowerPolicy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,6 +453,60 @@
 			};
 			name = Release;
 		};
+		A1000000000000000000000E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverpeate.BluesnoozeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A1000000000000000000000F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverpeate.BluesnoozeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -404,6 +524,15 @@
 			buildConfigurations = (
 				4F229AC9243CC29600B1784C /* Debug */,
 				4F229ACA243CC29600B1784C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000000000000000000000D /* Build configuration list for PBXNativeTarget "BluesnoozeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000000000000000000000E /* Debug */,
+				A1000000000000000000000F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
