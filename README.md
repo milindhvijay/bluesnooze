@@ -18,13 +18,13 @@ Bluesnooze can also manage the Wi-Fi connection in the same way (disabled by def
 
 ## Installation
 
-Minimum macOS version: 10.13 (use [older version](https://github.com/stefansundin/bluesnooze/releases/tag/v1.3) for 10.12)
+Minimum macOS version: 26.0
 
-1. Download `Bluesnooze.zip` from the [latest release][download-latest].
-1. In Finder, open `Bluesnooze.zip` in your `Downloads` directory.
-1. Drag `Bluesnooze.app` to your `Applications` directory.
+1. Open `Bluesnooze.xcodeproj` in Xcode 27.2 or later.
+1. Build the `Bluesnooze` scheme.
+1. Copy `Bluesnooze.app` to your `Applications` directory.
 1. Launch `Bluesnooze`.
-1. *Optional*: Configure <kbd>Wi-Fi</kbd> behavior.
+1. *Optional*: Configure <kbd>Wi-Fi</kbd> behaviour.
 1. *Optional*: Configure <kbd>Launch at login</kbd>.
 
 ## Caveats
