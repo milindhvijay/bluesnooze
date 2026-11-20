@@ -25,6 +25,8 @@
                 <outlet property="wifiActionOnScreenUnlockEnable" destination="hQ1-fS-R7M" id="Ia9-cl-mrb"/>
                 <outlet property="wifiActionOnScreenUnlockNothing" destination="Xld-ce-WJb" id="0C7-Am-NVB"/>
                 <outlet property="wifiActionOnScreenUnlockRestore" destination="1rl-rg-UXC" id="Bpd-2c-8xF"/>
+                <outlet property="wifiMenuItem" destination="2YU-sM-hjy" id="wifi-ou-tlt"/>
+                <outlet property="websiteMenuItem" destination="UNc-OX-MPq" id="web-ou-tlt"/>
             </connections>
         </customObject>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
@@ -118,7 +120,7 @@
                         <action selector="hideIconClicked:" target="Voe-Tx-rLC" id="rZI-1a-Hhe"/>
                     </connections>
                 </menuItem>
-                <menuItem title="Website" toolTip="Version 1.4" id="UNc-OX-MPq">
+                <menuItem title="Website" id="UNc-OX-MPq">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="websiteClicked:" target="Voe-Tx-rLC" id="dV5-aH-tK9"/>

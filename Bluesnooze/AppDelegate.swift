@@ -7,41 +7,46 @@
 //
 
 import Cocoa
+import CoreWLAN
 import IOBluetooth
 import LaunchAtLogin
-import CoreWLAN
+import os
 
-@NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate {
+@main
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @IBOutlet weak var statusMenu: NSMenu!
     @IBOutlet weak var disableBluetoothOnPowerDownMenuItem: NSMenuItem!
     @IBOutlet weak var bluetoothActionOnScreenUnlockRestore: NSMenuItem!
     @IBOutlet weak var bluetoothActionOnScreenUnlockEnable: NSMenuItem!
     @IBOutlet weak var bluetoothActionOnScreenUnlockNothing: NSMenuItem!
+    @IBOutlet weak var wifiMenuItem: NSMenuItem!
     @IBOutlet weak var disableWifiOnPowerDownMenuItem: NSMenuItem!
     @IBOutlet weak var wifiActionOnScreenUnlockRestore: NSMenuItem!
     @IBOutlet weak var wifiActionOnScreenUnlockEnable: NSMenuItem!
     @IBOutlet weak var wifiActionOnScreenUnlockNothing: NSMenuItem!
     @IBOutlet weak var launchAtLoginMenuItem: NSMenuItem!
     @IBOutlet weak var hideIconMenuItem: NSMenuItem!
+    @IBOutlet weak var websiteMenuItem: NSMenuItem!
 
-    private var statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    private var prevBluetoothState: Int32 = IOBluetoothPreferenceGetControllerPowerState()
-    private var prevWifiState: Bool = CWWiFiClient.shared().interface()!.powerOn()
+    private let logger = Logger(subsystem: "com.oliverpeate.Bluesnooze", category: "power")
+    private var statusItem: NSStatusItem?
+    private var powerPolicy = PowerPolicy()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         LaunchAtLogin.migrateIfNeeded() // Migrate to macOS 13 API (https://github.com/sindresorhus/LaunchAtLogin/releases/tag/v5.0.0)
+        statusMenu.autoenablesItems = false
+        statusMenu.delegate = self
         if !UserDefaults.standard.bool(forKey: "hideIcon") {
-            initStatusItem()
+            showStatusItem()
         }
         setupNotificationHandlers()
     }
 
     // Re-add the status bar icon when the app is launched a second time
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        initStatusItem()
+        UserDefaults.standard.removeObject(forKey: "hideIcon")
+        showStatusItem()
         return true
     }
 
@@ -93,32 +98,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // Click handlers
-
-    @IBAction func handleMenuOpen(_ sender: NSMenu) {
-        // Bluetooth
-        disableBluetoothOnPowerDownMenuItem.state = boolToMenuState(v: disableBluetoothOnPowerDown)
-        bluetoothActionOnScreenUnlockRestore.isEnabled = disableBluetoothOnPowerDown
-        bluetoothActionOnScreenUnlockRestore.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "restore" ? (disableBluetoothOnPowerDown ? true : nil) : false)
-        bluetoothActionOnScreenUnlockEnable.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "enable")
-        bluetoothActionOnScreenUnlockNothing.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "nothing")
-
-        // Wi-Fi
-        disableWifiOnPowerDownMenuItem.state = boolToMenuState(v: disableWifiOnPowerDown)
-        wifiActionOnScreenUnlockRestore.isEnabled = disableWifiOnPowerDown
-        wifiActionOnScreenUnlockRestore.state = boolToMenuState(v: wifiActionOnScreenUnlock == "restore" ? (disableWifiOnPowerDown ? true : nil) : false)
-        wifiActionOnScreenUnlockEnable.state = boolToMenuState(v: wifiActionOnScreenUnlock == "enable")
-        wifiActionOnScreenUnlockNothing.state = boolToMenuState(v: wifiActionOnScreenUnlock == "nothing")
-
-        // Launch at login
-        launchAtLoginMenuItem.state = boolToMenuState(v: LaunchAtLogin.isEnabled)
-
-        // Hide icon
-        hideIconMenuItem.state = boolToMenuState(v: UserDefaults.standard.bool(forKey: "hideIcon"))
-
-        // Show menu
-        statusItem.popUpMenu(statusMenu)
+    private var policySettings: PowerPolicy.Settings {
+        PowerPolicy.Settings(
+            disableBluetoothOnPowerDown: disableBluetoothOnPowerDown,
+            bluetoothActionOnScreenUnlock: PowerPolicy.UnlockAction(rawValue: bluetoothActionOnScreenUnlock) ?? .restore,
+            disableWifiOnPowerDown: disableWifiOnPowerDown,
+            wifiActionOnScreenUnlock: PowerPolicy.UnlockAction(rawValue: wifiActionOnScreenUnlock) ?? .nothing
+        )
     }
+
+    // Click handlers
 
     @IBAction func disableBluetoothOnPowerDownClicked(_ sender: NSMenuItem) {
         disableBluetoothOnPowerDown = !disableBluetoothOnPowerDown
@@ -180,12 +169,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Hide the icon
             UserDefaults.standard.set(true, forKey: "hideIcon")
             hideIconMenuItem.state = NSControl.StateValue.on
-            statusItem.statusBar?.removeStatusItem(statusItem)
+            // Removing the status item while its menu is tracking is unsafe.
+            DispatchQueue.main.async { [weak self] in
+                self?.hideStatusItem()
+            }
         }
     }
 
     @IBAction func websiteClicked(_ sender: NSMenuItem) {
-        NSWorkspace.shared.open(URL(string: "https://github.com/stefansundin/bluesnooze")!)
+        NSWorkspace.shared.open(URL(string: "https://github.com/milindhvijay/bluesnooze")!)
     }
 
     @IBAction func quitClicked(_ sender: NSMenuItem) {
@@ -202,49 +194,136 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSWorkspace.shared.notificationCenter.addObserver(self, selector: sel, name: notification, object: nil)
         }
         let dnc = DistributedNotificationCenter.default()
-        dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { notification in
-            self.onScreenUnlock(note: notification)
+        dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] notification in
+            self?.onScreenUnlock(note: notification)
         }
     }
 
     @objc func onPowerDown(note: NSNotification) {
-        prevBluetoothState = IOBluetoothPreferenceGetControllerPowerState()
-        if disableBluetoothOnPowerDown {
-            setBluetooth(powerOn: false)
-        }
-        prevWifiState = CWWiFiClient.shared().interface()!.powerOn()
-        if disableWifiOnPowerDown {
-            setWifi(powerOn: false)
-        }
+        let actions = powerPolicy.sleep(
+            settings: policySettings,
+            bluetoothOn: bluetoothPowerOn(),
+            wifiOn: wifiPowerOn()
+        )
+        apply(actions)
     }
 
     func onScreenUnlock(note: Notification) {
-        if bluetoothActionOnScreenUnlock == "enable" || (bluetoothActionOnScreenUnlock == "restore" && prevBluetoothState != 0) {
+        let actions = powerPolicy.unlock(settings: policySettings)
+        logger.notice("Unlock actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), Wi-Fi \(String(describing: actions.wifi), privacy: .public)")
+        apply(actions)
+    }
+
+    private func apply(_ actions: RadioActions) {
+        switch actions.bluetooth {
+        case .turnOn:
             setBluetooth(powerOn: true)
+        case .turnOff:
+            setBluetooth(powerOn: false)
+        case .nothing:
+            break
         }
-        if wifiActionOnScreenUnlock == "enable" || (wifiActionOnScreenUnlock == "restore" && prevWifiState) {
+
+        switch actions.wifi {
+        case .turnOn:
             setWifi(powerOn: true)
+        case .turnOff:
+            setWifi(powerOn: false)
+        case .nothing:
+            break
         }
+    }
+
+    private func bluetoothPowerOn() -> Bool {
+        IOBluetoothPreferenceGetControllerPowerState() != 0
     }
 
     private func setBluetooth(powerOn: Bool) {
+        // Private API: see the decision record in Plane. The setter returns void
+        // and there is no public state to confirm, so this is best effort.
         IOBluetoothPreferenceSetControllerPowerState(powerOn ? 1 : 0)
     }
 
-    private func setWifi(powerOn: Bool) {
-        try! CWWiFiClient.shared().interface()!.setPower(powerOn)
+    private var wifiInterface: CWInterface? {
+        CWWiFiClient.shared().interface()
     }
 
-    // UI state
+    private func wifiPowerOn() -> Bool {
+        wifiInterface?.powerOn() ?? false
+    }
 
-    private func initStatusItem() {
+    private func setWifi(powerOn: Bool) {
+        guard let interface = wifiInterface else {
+            logger.error("No Wi-Fi interface available")
+            return
+        }
+        do {
+            try interface.setPower(powerOn)
+        } catch {
+            logger.error("Wi-Fi power change failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    // Menu state
+
+    func menuWillOpen(_ menu: NSMenu) {
+        refreshMenuState()
+    }
+
+    private func refreshMenuState() {
+        // Bluetooth
+        disableBluetoothOnPowerDownMenuItem.state = boolToMenuState(v: disableBluetoothOnPowerDown)
+        bluetoothActionOnScreenUnlockRestore.isEnabled = disableBluetoothOnPowerDown
+        bluetoothActionOnScreenUnlockRestore.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "restore" ? (disableBluetoothOnPowerDown ? true : nil) : false)
+        bluetoothActionOnScreenUnlockEnable.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "enable")
+        bluetoothActionOnScreenUnlockNothing.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "nothing")
+
+        // Wi-Fi
+        let wifiAvailable = wifiInterface != nil
+        wifiMenuItem.isEnabled = wifiAvailable
+        wifiMenuItem.toolTip = wifiAvailable ? nil : "No Wi-Fi interface is available on this Mac."
+        disableWifiOnPowerDownMenuItem.state = boolToMenuState(v: disableWifiOnPowerDown)
+        wifiActionOnScreenUnlockRestore.isEnabled = disableWifiOnPowerDown
+        wifiActionOnScreenUnlockRestore.state = boolToMenuState(v: wifiActionOnScreenUnlock == "restore" ? (disableWifiOnPowerDown ? true : nil) : false)
+        wifiActionOnScreenUnlockEnable.state = boolToMenuState(v: wifiActionOnScreenUnlock == "enable")
+        wifiActionOnScreenUnlockNothing.state = boolToMenuState(v: wifiActionOnScreenUnlock == "nothing")
+
+        // Launch at login
+        launchAtLoginMenuItem.state = boolToMenuState(v: LaunchAtLogin.isEnabled)
+
+        // Hide icon
+        hideIconMenuItem.state = boolToMenuState(v: UserDefaults.standard.bool(forKey: "hideIcon"))
+
+        // Version
+        websiteMenuItem.toolTip = "Version \(appVersion)"
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+    }
+
+    private func showStatusItem() {
+        if statusItem == nil {
+            statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        }
+        guard let statusItem else {
+            return
+        }
         if let icon = NSImage(named: "bluesnooze") {
             icon.isTemplate = true
             statusItem.button?.image = icon
         } else {
             statusItem.button?.title = "Bluesnooze"
         }
-        statusItem.button?.action = #selector(handleMenuOpen(_:))
+        statusItem.menu = statusMenu
+    }
+
+    private func hideStatusItem() {
+        guard let statusItem else {
+            return
+        }
+        NSStatusBar.system.removeStatusItem(statusItem)
+        self.statusItem = nil
     }
 
     private func boolToMenuState(v: Bool?) -> NSControl.StateValue {
