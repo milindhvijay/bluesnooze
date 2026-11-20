@@ -1,8 +1,6 @@
 # Bluesnooze (fork)
 
-[Download the latest release.][download-latest]
-
-See what has been changed in this fork by reading the changelog in the releases section.
+This fork is maintained at [milindhvijay/bluesnooze](https://github.com/milindhvijay/bluesnooze). Public releases are not published yet; build from source.
 
 ## About
 
@@ -55,5 +53,3 @@ defaults write com.oliverpeate.Bluesnooze hideIcon -bool true
 # delete settings: (this resets everything to defaults)
 defaults delete com.oliverpeate.Bluesnooze
 ```
-
-[download-latest]: https://github.com/stefansundin/bluesnooze/releases/latest
