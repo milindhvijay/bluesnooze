@@ -33,15 +33,15 @@ struct PowerPolicy {
     private var wifiTurnedOff = false
 
     mutating func sleep(settings: Settings, bluetoothOn: Bool, wifiOn: Bool) -> RadioActions {
+        let bluetoothAction: RadioAction = settings.disableBluetoothOnPowerDown && bluetoothOn ? .turnOff : .nothing
+        let wifiAction: RadioAction = settings.disableWifiOnPowerDown && wifiOn ? .turnOff : .nothing
+
         bluetoothWasOn = bluetoothOn
         wifiWasOn = wifiOn
-        bluetoothTurnedOff = settings.disableBluetoothOnPowerDown
-        wifiTurnedOff = settings.disableWifiOnPowerDown
+        bluetoothTurnedOff = bluetoothAction == .turnOff
+        wifiTurnedOff = wifiAction == .turnOff
 
-        return RadioActions(
-            bluetooth: settings.disableBluetoothOnPowerDown ? .turnOff : .nothing,
-            wifi: settings.disableWifiOnPowerDown ? .turnOff : .nothing
-        )
+        return RadioActions(bluetooth: bluetoothAction, wifi: wifiAction)
     }
 
     mutating func unlock(settings: Settings) -> RadioActions {

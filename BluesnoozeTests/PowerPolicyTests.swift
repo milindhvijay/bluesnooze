@@ -16,6 +16,14 @@ final class PowerPolicyTests: XCTestCase {
         XCTAssertEqual(actions, RadioActions(bluetooth: .turnOff, wifi: .turnOff))
     }
 
+    func testSleepDoesNotTurnOffRadiosThatAreAlreadyOff() {
+        var policy = PowerPolicy()
+
+        let actions = policy.sleep(settings: bothRestore, bluetoothOn: false, wifiOn: false)
+
+        XCTAssertEqual(actions, RadioActions(bluetooth: .nothing, wifi: .nothing))
+    }
+
     func testSleepLeavesDisabledRadiosAlone() {
         let settings = PowerPolicy.Settings(
             disableBluetoothOnPowerDown: true,
