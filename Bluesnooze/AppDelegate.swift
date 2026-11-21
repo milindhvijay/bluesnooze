@@ -180,13 +180,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             bluetoothOn: bluetoothOn,
             wifiOn: wifiOn
         )
-        logger.notice("Sleep state: Bluetooth \(String(bluetoothOn), privacy: .public), Wi-Fi \(String(wifiOn), privacy: .public), actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), Wi-Fi \(String(describing: actions.wifi), privacy: .public)")
+        logger.notice("""
+            Sleep state: Bluetooth \(String(bluetoothOn), privacy: .public), \
+            Wi-Fi \(String(wifiOn), privacy: .public), \
+            actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), \
+            Wi-Fi \(String(describing: actions.wifi), privacy: .public)
+            """)
         radios.apply(actions)
     }
 
     func onScreenUnlock() {
         let actions = powerPolicy.unlock(settings: settings.policySettings)
-        logger.notice("Unlock actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), Wi-Fi \(String(describing: actions.wifi), privacy: .public)")
+        logger.notice("""
+            Unlock actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), \
+            Wi-Fi \(String(describing: actions.wifi), privacy: .public)
+            """)
         radios.apply(actions)
     }
 
@@ -197,7 +205,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func refreshMenuState() {
         let bluetoothAvailable = radios.bluetoothAvailable
         bluetoothMenuItem.isEnabled = bluetoothAvailable
-        bluetoothMenuItem.toolTip = bluetoothAvailable ? nil : "Bluetooth access is not available. Allow Bluesnooze in System Settings > Privacy & Security > Bluetooth."
+        let bluetoothToolTip = """
+            Bluetooth access is not available. Allow Bluesnooze in System Settings > \
+            Privacy & Security > Bluetooth.
+            """
+        bluetoothMenuItem.toolTip = bluetoothAvailable ? nil : bluetoothToolTip
         bluetoothMenu.update(
             featureEnabled: settings.isDisableOnSleep(for: .bluetooth),
             action: settings.unlockAction(for: .bluetooth)
