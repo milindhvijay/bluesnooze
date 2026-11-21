@@ -28,7 +28,10 @@ final class RadioController: NSObject, CBCentralManagerDelegate {
         MainActor.assumeIsolated {
             bluetoothState = state
             if state == .unauthorized {
-                logger.error("Bluetooth access is denied. Allow Bluesnooze in System Settings > Privacy & Security > Bluetooth.")
+                logger.error("""
+                    Bluetooth access is denied. Allow Bluesnooze in System Settings > \
+                    Privacy & Security > Bluetooth.
+                    """)
             }
         }
     }
