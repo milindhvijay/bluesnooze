@@ -46,6 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     )
     private var statusItem: NSStatusItem?
     private var powerPolicy = PowerPolicy()
+    private var notificationTokens: [NSObjectProtocol] = []
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         radios.requestBluetoothAccess()
@@ -133,22 +134,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func setupNotificationHandlers() {
-        [
-            NSWorkspace.willSleepNotification: #selector(onPowerDown(note:)),
-            NSWorkspace.willPowerOffNotification: #selector(onPowerDown(note:))
-        ].forEach { notification, sel in
-            NSWorkspace.shared.notificationCenter.addObserver(self, selector: sel, name: notification, object: nil)
+        let workspaceCenter = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.willSleepNotification, NSWorkspace.willPowerOffNotification] {
+            let token = workspaceCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                // The observer queue is main, so the assertion holds.
+                MainActor.assumeIsolated {
+                    self?.onPowerDown()
+                }
+            }
+            notificationTokens.append(token)
         }
-        let dnc = DistributedNotificationCenter.default()
-        dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
+
+        let unlockToken = DistributedNotificationCenter.default().addObserver(
+            forName: .init("com.apple.screenIsUnlocked"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
             // The observer queue is main, so the assertion holds.
             MainActor.assumeIsolated {
                 self?.onScreenUnlock()
             }
         }
+        notificationTokens.append(unlockToken)
     }
 
-    @objc func onPowerDown(note: NSNotification) {
+    func onPowerDown() {
         let bluetoothOn = radios.bluetoothOn
         let wifiOn = radios.wifiOn
         let actions = powerPolicy.sleep(
