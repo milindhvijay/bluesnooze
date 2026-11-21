@@ -1,5 +1,3 @@
-import Foundation
-
 enum RadioAction: Equatable {
     case turnOn
     case turnOff
@@ -27,55 +25,46 @@ struct PowerPolicy {
         let wifiActionOnScreenUnlock: UnlockAction
     }
 
-    private var bluetoothWasOn = false
-    private var wifiWasOn = false
-    private var bluetoothTurnedOff = false
-    private var wifiTurnedOff = false
+    private struct Snapshot {
+        var wasOn = false
+        var turnedOff = false
+    }
+
+    private var bluetooth = Snapshot()
+    private var wifi = Snapshot()
 
     mutating func sleep(settings: Settings, bluetoothOn: Bool, wifiOn: Bool) -> RadioActions {
         let bluetoothAction: RadioAction = settings.disableBluetoothOnPowerDown && bluetoothOn ? .turnOff : .nothing
         let wifiAction: RadioAction = settings.disableWifiOnPowerDown && wifiOn ? .turnOff : .nothing
 
-        bluetoothWasOn = bluetoothOn
-        wifiWasOn = wifiOn
-        bluetoothTurnedOff = bluetoothAction == .turnOff
-        wifiTurnedOff = wifiAction == .turnOff
+        bluetooth = Snapshot(wasOn: bluetoothOn, turnedOff: bluetoothAction == .turnOff)
+        wifi = Snapshot(wasOn: wifiOn, turnedOff: wifiAction == .turnOff)
 
         return RadioActions(bluetooth: bluetoothAction, wifi: wifiAction)
     }
 
     mutating func unlock(settings: Settings) -> RadioActions {
         let actions = RadioActions(
-            bluetooth: action(
-                for: settings.bluetoothActionOnScreenUnlock,
-                wasOn: bluetoothWasOn,
-                turnedOff: bluetoothTurnedOff
-            ),
-            wifi: action(
-                for: settings.wifiActionOnScreenUnlock,
-                wasOn: wifiWasOn,
-                turnedOff: wifiTurnedOff
-            )
+            bluetooth: action(for: settings.bluetoothActionOnScreenUnlock, snapshot: bluetooth),
+            wifi: action(for: settings.wifiActionOnScreenUnlock, snapshot: wifi)
         )
         reset()
         return actions
     }
 
-    private func action(for setting: UnlockAction, wasOn: Bool, turnedOff: Bool) -> RadioAction {
+    private func action(for setting: UnlockAction, snapshot: Snapshot) -> RadioAction {
         switch setting {
         case .nothing:
             return .nothing
         case .enable:
             return .turnOn
         case .restore:
-            return turnedOff && wasOn ? .turnOn : .nothing
+            return snapshot.turnedOff && snapshot.wasOn ? .turnOn : .nothing
         }
     }
 
     private mutating func reset() {
-        bluetoothWasOn = false
-        wifiWasOn = false
-        bluetoothTurnedOff = false
-        wifiTurnedOff = false
+        bluetooth = Snapshot()
+        wifi = Snapshot()
     }
 }

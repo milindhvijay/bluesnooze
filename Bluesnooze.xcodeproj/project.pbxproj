@@ -15,6 +15,11 @@
 		A10000000000000000000004 /* PowerPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* PowerPolicyTests.swift */; };
 		A10000000000000000000011 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* XCTest.framework */; };
 		A10000000000000000000012 /* PowerPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* PowerPolicy.swift */; };
+		A10000000000000000000021 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* SettingsStore.swift */; };
+		A10000000000000000000022 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* SettingsStore.swift */; };
+		A10000000000000000000024 /* RadioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000023 /* RadioController.swift */; };
+		A10000000000000000000026 /* RadioMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* RadioMenu.swift */; };
+		A10000000000000000000028 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* SettingsStoreTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +34,10 @@
 		A10000000000000000000003 /* PowerPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerPolicyTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000005 /* BluesnoozeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BluesnoozeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000010 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/MacOSX.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		A10000000000000000000020 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		A10000000000000000000023 /* RadioController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioController.swift; sourceTree = "<group>"; };
+		A10000000000000000000025 /* RadioMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioMenu.swift; sourceTree = "<group>"; };
+		A10000000000000000000027 /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +84,9 @@
 			children = (
 				4F229ABD243CC29500B1784C /* AppDelegate.swift */,
 				A10000000000000000000001 /* PowerPolicy.swift */,
+				A10000000000000000000020 /* SettingsStore.swift */,
+				A10000000000000000000023 /* RadioController.swift */,
+				A10000000000000000000025 /* RadioMenu.swift */,
 				4F229ABF243CC29600B1784C /* Assets.xcassets */,
 				4F229AC1243CC29600B1784C /* MainMenu.xib */,
 				4F229AC4243CC29600B1784C /* Info.plist */,
@@ -96,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000003 /* PowerPolicyTests.swift */,
+				A10000000000000000000027 /* SettingsStoreTests.swift */,
 			);
 			path = BluesnoozeTests;
 			sourceTree = "<group>";
@@ -229,6 +242,9 @@
 			files = (
 				4F229ABE243CC29500B1784C /* AppDelegate.swift in Sources */,
 				A10000000000000000000002 /* PowerPolicy.swift in Sources */,
+				A10000000000000000000021 /* SettingsStore.swift in Sources */,
+				A10000000000000000000024 /* RadioController.swift in Sources */,
+				A10000000000000000000026 /* RadioMenu.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,6 +254,8 @@
 			files = (
 				A10000000000000000000004 /* PowerPolicyTests.swift in Sources */,
 				A10000000000000000000012 /* PowerPolicy.swift in Sources */,
+				A10000000000000000000022 /* SettingsStore.swift in Sources */,
+				A10000000000000000000028 /* SettingsStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

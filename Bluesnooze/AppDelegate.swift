@@ -7,9 +7,6 @@
 //
 
 import Cocoa
-import CoreBluetooth
-import CoreWLAN
-import IOBluetooth
 import LaunchAtLogin
 import os
 
@@ -30,128 +27,71 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @IBOutlet weak var hideIconMenuItem: NSMenuItem!
     @IBOutlet weak var websiteMenuItem: NSMenuItem!
 
-    private let logger = Logger(subsystem: "com.oliverpeate.Bluesnooze", category: "power")
-    private lazy var bluetoothManager = CBCentralManager(
-        delegate: nil,
-        queue: nil,
-        options: [CBCentralManagerOptionShowPowerAlertKey: false]
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Bluesnooze", category: "power")
+    private lazy var settings = SettingsStore()
+    private lazy var radios = RadioController(logger: logger)
+    private lazy var bluetoothMenu = RadioMenu(
+        disableOnSleepItem: disableBluetoothOnPowerDownMenuItem,
+        restoreItem: bluetoothActionOnScreenUnlockRestore,
+        enableItem: bluetoothActionOnScreenUnlockEnable,
+        nothingItem: bluetoothActionOnScreenUnlockNothing
+    )
+    private lazy var wifiMenu = RadioMenu(
+        disableOnSleepItem: disableWifiOnPowerDownMenuItem,
+        restoreItem: wifiActionOnScreenUnlockRestore,
+        enableItem: wifiActionOnScreenUnlockEnable,
+        nothingItem: wifiActionOnScreenUnlockNothing
     )
     private var statusItem: NSStatusItem?
     private var powerPolicy = PowerPolicy()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        _ = bluetoothManager // Ask for Bluetooth access while the user is present.
+        _ = radios
         LaunchAtLogin.migrateIfNeeded() // Migrate to macOS 13 API (https://github.com/sindresorhus/LaunchAtLogin/releases/tag/v5.0.0)
         statusMenu.autoenablesItems = false
         statusMenu.delegate = self
-        if !UserDefaults.standard.bool(forKey: "hideIcon") {
+        if !settings.hideIcon {
             showStatusItem()
         }
         setupNotificationHandlers()
     }
 
-    // Re-add the status bar icon when the app is launched a second time
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        UserDefaults.standard.removeObject(forKey: "hideIcon")
+        settings.hideIcon = false
         showStatusItem()
         return true
     }
 
-    // Settings
-
-    var disableBluetoothOnPowerDown: Bool {
-        get {
-            if UserDefaults.standard.object(forKey: "disableBluetoothOnPowerDown") == nil {
-                // the primary function of the program is enabled by default
-                return true
-            }
-            return UserDefaults.standard.bool(forKey: "disableBluetoothOnPowerDown")
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: "disableBluetoothOnPowerDown")
-        }
-    }
-
-    var bluetoothActionOnScreenUnlock: String {
-        get {
-            if let value = UserDefaults.standard.string(forKey: "bluetoothActionOnScreenUnlock") {
-                return value
-            }
-            return "restore"
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: "bluetoothActionOnScreenUnlock")
-        }
-    }
-
-    var disableWifiOnPowerDown: Bool {
-        get {
-            return UserDefaults.standard.bool(forKey: "disableWifiOnPowerDown")
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: "disableWifiOnPowerDown")
-        }
-    }
-
-    var wifiActionOnScreenUnlock: String {
-        get {
-            if let value = UserDefaults.standard.string(forKey: "wifiActionOnScreenUnlock") {
-                return value
-            }
-            return "nothing"
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: "wifiActionOnScreenUnlock")
-        }
-    }
-
-    private var policySettings: PowerPolicy.Settings {
-        PowerPolicy.Settings(
-            disableBluetoothOnPowerDown: disableBluetoothOnPowerDown,
-            bluetoothActionOnScreenUnlock: PowerPolicy.UnlockAction(rawValue: bluetoothActionOnScreenUnlock) ?? .restore,
-            disableWifiOnPowerDown: disableWifiOnPowerDown,
-            wifiActionOnScreenUnlock: PowerPolicy.UnlockAction(rawValue: wifiActionOnScreenUnlock) ?? .nothing
-        )
-    }
-
-    // Click handlers
-
     @IBAction func disableBluetoothOnPowerDownClicked(_ sender: NSMenuItem) {
-        disableBluetoothOnPowerDown = !disableBluetoothOnPowerDown
-        if bluetoothActionOnScreenUnlock == "restore" {
-            bluetoothActionOnScreenUnlock = "nothing"
-        }
+        settings.setDisableOnSleep(!settings.isDisableOnSleep(for: .bluetooth), for: .bluetooth)
     }
 
     @IBAction func bluetoothActionOnScreenUnlockRestoreClicked(_ sender: NSMenuItem) {
-        bluetoothActionOnScreenUnlock = "restore"
+        settings.setUnlockAction(.restore, for: .bluetooth)
     }
 
     @IBAction func bluetoothActionOnScreenUnlockEnableClicked(_ sender: NSMenuItem) {
-        bluetoothActionOnScreenUnlock = "enable"
+        settings.setUnlockAction(.enable, for: .bluetooth)
     }
 
     @IBAction func bluetoothActionOnScreenUnlockNothingClicked(_ sender: NSMenuItem) {
-        bluetoothActionOnScreenUnlock = "nothing"
+        settings.setUnlockAction(.nothing, for: .bluetooth)
     }
 
     @IBAction func disableWifiOnPowerDownClicked(_ sender: NSMenuItem) {
-        disableWifiOnPowerDown = !disableWifiOnPowerDown
-        if wifiActionOnScreenUnlock == "restore" {
-            wifiActionOnScreenUnlock = "nothing"
-        }
+        settings.setDisableOnSleep(!settings.isDisableOnSleep(for: .wifi), for: .wifi)
     }
 
     @IBAction func wifiActionOnScreenUnlockRestoreClicked(_ sender: NSMenuItem) {
-        wifiActionOnScreenUnlock = "restore"
+        settings.setUnlockAction(.restore, for: .wifi)
     }
 
     @IBAction func wifiActionOnScreenUnlockEnableClicked(_ sender: NSMenuItem) {
-        wifiActionOnScreenUnlock = "enable"
+        settings.setUnlockAction(.enable, for: .wifi)
     }
 
     @IBAction func wifiActionOnScreenUnlockNothingClicked(_ sender: NSMenuItem) {
-        wifiActionOnScreenUnlock = "nothing"
+        settings.setUnlockAction(.nothing, for: .wifi)
     }
 
     @IBAction func launchAtLoginClicked(_ sender: NSMenuItem) {
@@ -159,11 +99,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @IBAction func hideIconClicked(_ sender: NSMenuItem) {
-        if UserDefaults.standard.bool(forKey: "hideIcon") {
-            UserDefaults.standard.removeObject(forKey: "hideIcon")
-            hideIconMenuItem.state = NSControl.StateValue.off
+        if settings.hideIcon {
+            settings.hideIcon = false
+            hideIconMenuItem.state = .off
         } else {
-            // Show a tip on how to get the icon back
             let alert = NSAlert()
             alert.messageText = "Important information"
             alert.informativeText = "Launch the app a second time to show the icon again."
@@ -173,9 +112,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if alert.runModal() == NSApplication.ModalResponse.alertSecondButtonReturn {
                 return
             }
-            // Hide the icon
-            UserDefaults.standard.set(true, forKey: "hideIcon")
-            hideIconMenuItem.state = NSControl.StateValue.on
+            settings.hideIcon = true
+            hideIconMenuItem.state = .on
             // Removing the status item while its menu is tracking is unsafe.
             DispatchQueue.main.async { [weak self] in
                 self?.hideStatusItem()
@@ -184,14 +122,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @IBAction func websiteClicked(_ sender: NSMenuItem) {
-        NSWorkspace.shared.open(URL(string: "https://github.com/milindhvijay/bluesnooze")!)
+        if let url = URL(string: "https://github.com/milindhvijay/bluesnooze") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @IBAction func quitClicked(_ sender: NSMenuItem) {
         NSApplication.shared.terminate(self)
     }
-
-    // Notification handlers
 
     func setupNotificationHandlers() {
         [
@@ -201,123 +139,54 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             NSWorkspace.shared.notificationCenter.addObserver(self, selector: sel, name: notification, object: nil)
         }
         let dnc = DistributedNotificationCenter.default()
-        dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] notification in
-            self?.onScreenUnlock(note: notification)
+        dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
+            self?.onScreenUnlock()
         }
     }
 
     @objc func onPowerDown(note: NSNotification) {
-        let bluetoothOn = bluetoothPowerOn()
-        let wifiOn = wifiPowerOn()
+        let bluetoothOn = radios.bluetoothOn
+        let wifiOn = radios.wifiOn
         let actions = powerPolicy.sleep(
-            settings: policySettings,
+            settings: settings.policySettings,
             bluetoothOn: bluetoothOn,
             wifiOn: wifiOn
         )
         logger.notice("Sleep state: Bluetooth \(String(bluetoothOn), privacy: .public), Wi-Fi \(String(wifiOn), privacy: .public), actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), Wi-Fi \(String(describing: actions.wifi), privacy: .public)")
-        apply(actions)
+        radios.apply(actions)
     }
 
-    func onScreenUnlock(note: Notification) {
-        let actions = powerPolicy.unlock(settings: policySettings)
+    func onScreenUnlock() {
+        let actions = powerPolicy.unlock(settings: settings.policySettings)
         logger.notice("Unlock actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), Wi-Fi \(String(describing: actions.wifi), privacy: .public)")
-        apply(actions)
+        radios.apply(actions)
     }
-
-    private func apply(_ actions: RadioActions) {
-        switch actions.bluetooth {
-        case .turnOn:
-            setBluetooth(powerOn: true)
-        case .turnOff:
-            setBluetooth(powerOn: false)
-        case .nothing:
-            break
-        }
-
-        switch actions.wifi {
-        case .turnOn:
-            setWifi(powerOn: true)
-        case .turnOff:
-            setWifi(powerOn: false)
-        case .nothing:
-            break
-        }
-    }
-
-    private func bluetoothPowerOn() -> Bool {
-        // CoreBluetooth reads the radio state without the private getter, which
-        // blocks on the TCC prompt when Bluetooth access has not been granted.
-        bluetoothManager.state == .poweredOn
-    }
-
-    private func setBluetooth(powerOn: Bool) {
-        guard bluetoothPowerOn() != powerOn else {
-            return
-        }
-        // Private API: see the decision record in Plane. The setter returns void
-        // and there is no public state to confirm, so this is best effort.
-        IOBluetoothPreferenceSetControllerPowerState(powerOn ? 1 : 0)
-    }
-
-    private var wifiInterface: CWInterface? {
-        CWWiFiClient.shared().interface()
-    }
-
-    private func wifiPowerOn() -> Bool {
-        wifiInterface?.powerOn() ?? false
-    }
-
-    private func setWifi(powerOn: Bool) {
-        guard let interface = wifiInterface else {
-            logger.error("No Wi-Fi interface available")
-            return
-        }
-        guard interface.powerOn() != powerOn else {
-            return
-        }
-        do {
-            try interface.setPower(powerOn)
-        } catch {
-            logger.error("Wi-Fi power change failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    // Menu state
 
     func menuWillOpen(_ menu: NSMenu) {
         refreshMenuState()
     }
 
     private func refreshMenuState() {
-        // Bluetooth
-        disableBluetoothOnPowerDownMenuItem.state = boolToMenuState(v: disableBluetoothOnPowerDown)
-        bluetoothActionOnScreenUnlockRestore.isEnabled = disableBluetoothOnPowerDown
-        bluetoothActionOnScreenUnlockRestore.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "restore" ? (disableBluetoothOnPowerDown ? true : nil) : false)
-        bluetoothActionOnScreenUnlockEnable.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "enable")
-        bluetoothActionOnScreenUnlockNothing.state = boolToMenuState(v: bluetoothActionOnScreenUnlock == "nothing")
+        bluetoothMenu.update(
+            featureEnabled: settings.isDisableOnSleep(for: .bluetooth),
+            action: settings.unlockAction(for: .bluetooth)
+        )
 
-        // Wi-Fi
-        let wifiAvailable = wifiInterface != nil
+        let wifiAvailable = radios.wifiAvailable
         wifiMenuItem.isEnabled = wifiAvailable
         wifiMenuItem.toolTip = wifiAvailable ? nil : "No Wi-Fi interface is available on this Mac."
-        disableWifiOnPowerDownMenuItem.state = boolToMenuState(v: disableWifiOnPowerDown)
-        wifiActionOnScreenUnlockRestore.isEnabled = disableWifiOnPowerDown
-        wifiActionOnScreenUnlockRestore.state = boolToMenuState(v: wifiActionOnScreenUnlock == "restore" ? (disableWifiOnPowerDown ? true : nil) : false)
-        wifiActionOnScreenUnlockEnable.state = boolToMenuState(v: wifiActionOnScreenUnlock == "enable")
-        wifiActionOnScreenUnlockNothing.state = boolToMenuState(v: wifiActionOnScreenUnlock == "nothing")
+        wifiMenu.update(
+            featureEnabled: settings.isDisableOnSleep(for: .wifi),
+            action: settings.unlockAction(for: .wifi)
+        )
 
-        // Launch at login
-        launchAtLoginMenuItem.state = boolToMenuState(v: LaunchAtLogin.isEnabled)
-
-        // Hide icon
-        hideIconMenuItem.state = boolToMenuState(v: UserDefaults.standard.bool(forKey: "hideIcon"))
-
-        // Version
+        launchAtLoginMenuItem.state = menuState(LaunchAtLogin.isEnabled)
+        hideIconMenuItem.state = menuState(settings.hideIcon)
         websiteMenuItem.toolTip = "Version \(appVersion)"
     }
 
     private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
     }
 
     private func showStatusItem() {
@@ -344,9 +213,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         self.statusItem = nil
     }
 
-    private func boolToMenuState(v: Bool?) -> NSControl.StateValue {
-        return v == true ? NSControl.StateValue.on :
-               v == false ? NSControl.StateValue.off :
-               NSControl.StateValue.mixed
+    private func menuState(_ value: Bool) -> NSControl.StateValue {
+        return value ? .on : .off
     }
 }

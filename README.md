@@ -33,7 +33,7 @@ Minimum macOS version: 26.0
 
 ## Settings
 
-The application settings can be modified using the `defaults` command.
+The application settings can be modified using the `defaults` command. The keys are defined in `SettingsStore.swift`; keep this list in sync when they change.
 
 ```shell
 # read settings:
