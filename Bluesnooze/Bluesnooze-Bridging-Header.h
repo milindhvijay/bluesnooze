@@ -3,4 +3,3 @@
 //
 
 void IOBluetoothPreferenceSetControllerPowerState(int);
-int IOBluetoothPreferenceGetControllerPowerState();

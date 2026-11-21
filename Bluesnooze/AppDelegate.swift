@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import CoreBluetooth
 import CoreWLAN
 import IOBluetooth
 import LaunchAtLogin
@@ -30,10 +31,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @IBOutlet weak var websiteMenuItem: NSMenuItem!
 
     private let logger = Logger(subsystem: "com.oliverpeate.Bluesnooze", category: "power")
+    private lazy var bluetoothManager = CBCentralManager(
+        delegate: nil,
+        queue: nil,
+        options: [CBCentralManagerOptionShowPowerAlertKey: false]
+    )
     private var statusItem: NSStatusItem?
     private var powerPolicy = PowerPolicy()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        _ = bluetoothManager // Ask for Bluetooth access while the user is present.
         LaunchAtLogin.migrateIfNeeded() // Migrate to macOS 13 API (https://github.com/sindresorhus/LaunchAtLogin/releases/tag/v5.0.0)
         statusMenu.autoenablesItems = false
         statusMenu.delegate = self
@@ -200,11 +207,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc func onPowerDown(note: NSNotification) {
+        let bluetoothOn = bluetoothPowerOn()
+        let wifiOn = wifiPowerOn()
         let actions = powerPolicy.sleep(
             settings: policySettings,
-            bluetoothOn: bluetoothPowerOn(),
-            wifiOn: wifiPowerOn()
+            bluetoothOn: bluetoothOn,
+            wifiOn: wifiOn
         )
+        logger.notice("Sleep state: Bluetooth \(String(bluetoothOn), privacy: .public), Wi-Fi \(String(wifiOn), privacy: .public), actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), Wi-Fi \(String(describing: actions.wifi), privacy: .public)")
         apply(actions)
     }
 
@@ -235,10 +245,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func bluetoothPowerOn() -> Bool {
-        IOBluetoothPreferenceGetControllerPowerState() != 0
+        // CoreBluetooth reads the radio state without the private getter, which
+        // blocks on the TCC prompt when Bluetooth access has not been granted.
+        bluetoothManager.state == .poweredOn
     }
 
     private func setBluetooth(powerOn: Bool) {
+        guard bluetoothPowerOn() != powerOn else {
+            return
+        }
         // Private API: see the decision record in Plane. The setter returns void
         // and there is no public state to confirm, so this is best effort.
         IOBluetoothPreferenceSetControllerPowerState(powerOn ? 1 : 0)
@@ -255,6 +270,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func setWifi(powerOn: Bool) {
         guard let interface = wifiInterface else {
             logger.error("No Wi-Fi interface available")
+            return
+        }
+        guard interface.powerOn() != powerOn else {
             return
         }
         do {
