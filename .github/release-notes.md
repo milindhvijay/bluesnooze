@@ -1,4 +1,4 @@
-This is a fork of [stefansundin/bluesnooze](https://github.com/stefansundin/bluesnooze). It requires macOS 26.0 or later.
+This is a fork of [stefansundin/bluesnooze](https://github.com/stefansundin/bluesnooze). It manages Bluetooth and Wi-Fi around sleep and unlock, and requires macOS 26.0 or later.
 
 ## Install
 
