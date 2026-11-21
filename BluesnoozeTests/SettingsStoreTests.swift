@@ -20,9 +20,9 @@ final class SettingsStoreTests: XCTestCase {
 
     func testDefaults() {
         XCTAssertTrue(store.isDisableOnSleep(for: .bluetooth))
-        XCTAssertFalse(store.isDisableOnSleep(for: .wifi))
+        XCTAssertTrue(store.isDisableOnSleep(for: .wifi))
         XCTAssertEqual(store.unlockAction(for: .bluetooth), .restore)
-        XCTAssertEqual(store.unlockAction(for: .wifi), .nothing)
+        XCTAssertEqual(store.unlockAction(for: .wifi), .restore)
         XCTAssertFalse(store.hideIcon)
     }
 
@@ -52,7 +52,7 @@ final class SettingsStoreTests: XCTestCase {
         defaults.set("bogus", forKey: SettingsStore.Key.wifiActionOnScreenUnlock)
 
         XCTAssertEqual(store.unlockAction(for: .bluetooth), .restore)
-        XCTAssertEqual(store.unlockAction(for: .wifi), .nothing)
+        XCTAssertEqual(store.unlockAction(for: .wifi), .restore)
     }
 
     func testDisablingFeatureDemotesRestore() {

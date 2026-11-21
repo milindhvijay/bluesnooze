@@ -22,7 +22,7 @@ struct SettingsStore {
         self.defaults = defaults
         defaults.register(defaults: [
             Key.disableBluetoothOnPowerDown: true,
-            Key.disableWifiOnPowerDown: false,
+            Key.disableWifiOnPowerDown: true,
             Key.bluetoothActionOnScreenUnlock: defaultUnlockAction(for: .bluetooth).rawValue,
             Key.wifiActionOnScreenUnlock: defaultUnlockAction(for: .wifi).rawValue,
             Key.hideIcon: false,
@@ -113,7 +113,7 @@ struct SettingsStore {
         case .bluetooth:
             return .restore
         case .wifi:
-            return .nothing
+            return .restore
         }
     }
 }
