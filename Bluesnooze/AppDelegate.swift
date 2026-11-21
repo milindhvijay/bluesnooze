@@ -9,6 +9,7 @@
 import Cocoa
 import LaunchAtLogin
 import os
+import ServiceManagement
 
 @main
 @MainActor
@@ -108,7 +109,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @IBAction func launchAtLoginClicked(_ sender: NSMenuItem) {
-        LaunchAtLogin.isEnabled = !LaunchAtLogin.isEnabled
+        let service = SMAppService.mainApp
+        switch service.status {
+        case .enabled:
+            LaunchAtLogin.isEnabled = false
+        case .requiresApproval, .notFound:
+            showLaunchAtLoginGuidance()
+        case .notRegistered:
+            LaunchAtLogin.isEnabled = true
+            if service.status != .enabled {
+                showLaunchAtLoginGuidance()
+            }
+        @unknown default:
+            showLaunchAtLoginGuidance()
+        }
+        logger.notice("Launch at login status: \(String(describing: service.status), privacy: .public)")
     }
 
     @IBAction func hideIconClicked(_ sender: NSMenuItem) {
@@ -181,22 +196,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
         }
-    }
-
-    private func restoreRadiosIfNeeded() {
-        guard settings.bluetoothRestoreOwed || settings.wifiRestoreOwed else {
-            return
-        }
-        logger.notice("Restoring radios left off by the previous session")
-        onScreenUnlock()
-    }
-
-    private func requestBluetoothAccessIfNeeded() {
-        guard settings.isDisableOnSleep(for: .bluetooth)
-            || settings.unlockAction(for: .bluetooth) != .nothing else {
-            return
-        }
-        radios.requestBluetoothAccess()
     }
 
     func onPowerDown() {
@@ -300,6 +299,37 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 }
 
 private extension AppDelegate {
+    func showLaunchAtLoginGuidance() {
+        let alert = NSAlert()
+        alert.messageText = "Launch at login is not enabled"
+        alert.informativeText = """
+            macOS must allow Bluesnooze in System Settings under General, Login Items. \
+            Keep Bluesnooze in Applications for the login item to work.
+            """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Open Login Items")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            SMAppService.openSystemSettingsLoginItems()
+        }
+    }
+
+    func restoreRadiosIfNeeded() {
+        guard settings.bluetoothRestoreOwed || settings.wifiRestoreOwed else {
+            return
+        }
+        logger.notice("Restoring radios left off by the previous session")
+        onScreenUnlock()
+    }
+
+    func requestBluetoothAccessIfNeeded() {
+        guard settings.isDisableOnSleep(for: .bluetooth)
+            || settings.unlockAction(for: .bluetooth) != .nothing else {
+            return
+        }
+        radios.requestBluetoothAccess()
+    }
+
     func setupFailureMenuItems() {
         let bluetoothItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         bluetoothItem.isEnabled = false
