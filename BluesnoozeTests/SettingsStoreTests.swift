@@ -64,6 +64,17 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.unlockAction(for: .bluetooth), .nothing)
     }
 
+    func testDisablingWifiFeatureDemotesRestore() {
+        store.setUnlockAction(.restore, for: .wifi)
+
+        store.setDisableOnSleep(false, for: .wifi)
+
+        XCTAssertFalse(store.isDisableOnSleep(for: .wifi))
+        XCTAssertEqual(store.unlockAction(for: .wifi), .nothing)
+        XCTAssertTrue(store.isDisableOnSleep(for: .bluetooth))
+        XCTAssertEqual(store.unlockAction(for: .bluetooth), .restore)
+    }
+
     func testEnablingFeaturePreservesRestore() {
         store.setUnlockAction(.restore, for: .wifi)
 
