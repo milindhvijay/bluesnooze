@@ -282,6 +282,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             statusItem.button?.title = "Bluesnooze"
         }
+        statusItem.button?.setAccessibilityLabel("Bluesnooze")
         statusItem.menu = statusMenu
     }
 
