@@ -11,6 +11,7 @@ import LaunchAtLogin
 import os
 
 @main
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @IBOutlet weak var statusMenu: NSMenu!
@@ -140,7 +141,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         let dnc = DistributedNotificationCenter.default()
         dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
-            self?.onScreenUnlock()
+            // The observer queue is main, so the assertion holds.
+            MainActor.assumeIsolated {
+                self?.onScreenUnlock()
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 import AppKit
 
+@MainActor
 struct RadioMenu {
     let disableOnSleepItem: NSMenuItem
     let restoreItem: NSMenuItem
