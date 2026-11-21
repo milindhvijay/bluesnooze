@@ -7,6 +7,8 @@ import os
 final class RadioController: NSObject, CBCentralManagerDelegate {
     private let logger: Logger
     private var bluetoothState: CBManagerState = .unknown
+    private(set) var bluetoothFailure: String?
+    private(set) var wifiFailure: String?
     private lazy var bluetoothManager = CBCentralManager(
         delegate: self,
         queue: nil, // The main queue keeps bluetoothState main-confined.
@@ -84,6 +86,7 @@ final class RadioController: NSObject, CBCentralManagerDelegate {
 
     private func setBluetooth(_ powerOn: Bool) {
         guard bluetoothAvailable else {
+            bluetoothFailure = "Bluetooth access is not available"
             logger.error("Bluetooth is unavailable; cannot change power.")
             return
         }
@@ -91,19 +94,24 @@ final class RadioController: NSObject, CBCentralManagerDelegate {
         // CoreBluetooth value that can be stale, and the policy already decides
         // when a write is needed.
         IOBluetoothPreferenceSetControllerPowerState(powerOn ? 1 : 0)
+        bluetoothFailure = nil
     }
 
     private func setWifi(_ powerOn: Bool) {
         guard let interface = wifiInterface else {
-            logger.error("No Wi-Fi interface available")
+            wifiFailure = "No Wi-Fi interface is available"
+            logger.error("No Wi-Fi interface is available")
             return
         }
         guard interface.powerOn() != powerOn else {
+            wifiFailure = nil
             return
         }
         do {
             try interface.setPower(powerOn)
+            wifiFailure = nil
         } catch {
+            wifiFailure = error.localizedDescription
             logger.error("Wi-Fi power change failed: \(error.localizedDescription, privacy: .public)")
         }
     }
