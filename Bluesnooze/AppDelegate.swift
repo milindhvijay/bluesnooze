@@ -48,7 +48,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         radios.requestBluetoothAccess()
-        LaunchAtLogin.migrateIfNeeded() // Migrate to macOS 13 API (https://github.com/sindresorhus/LaunchAtLogin/releases/tag/v5.0.0)
         statusMenu.autoenablesItems = false
         statusMenu.delegate = self
         if !settings.hideIcon {
