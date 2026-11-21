@@ -136,11 +136,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func setupNotificationHandlers() {
         let workspaceCenter = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.willPowerOffNotification] {
-            let token = workspaceCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                // The observer queue is main, so the assertion holds.
-                MainActor.assumeIsolated {
-                    self?.onPowerDown()
-                }
+            // Workspace power notifications are posted on the main thread and an
+            // observer may delay sleep while handling them, so keep this synchronous.
+            let token = workspaceCenter.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
+                self?.handlePowerNotification()
             }
             notificationTokens.append(token)
         }
@@ -156,6 +155,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
         notificationTokens.append(unlockToken)
+    }
+
+    nonisolated private func handlePowerNotification() {
+        if Thread.isMainThread {
+            MainActor.assumeIsolated {
+                onPowerDown()
+            }
+        } else {
+            // The observer must finish before sleep, so hop synchronously.
+            DispatchQueue.main.sync {
+                MainActor.assumeIsolated {
+                    onPowerDown()
+                }
+            }
+        }
     }
 
     func onPowerDown() {
