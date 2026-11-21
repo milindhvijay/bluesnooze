@@ -29,6 +29,7 @@ Minimum macOS version: 26.0
 
 - The app has an option to hide the icon from the status bar. To show the icon again simply launch the application a second time.
 - Please note this app is not compatible with the “Allow your Apple Watch to unlock your Mac” feature.
+- Turning Wi-Fi off at sleep also disables Wake on LAN, Power Nap and network-based Find My while the Mac sleeps.
 - Unfortunately this app can't be distributed via the App Store because it uses a private API to switch Bluetooth on/off.
 
 ## Settings
