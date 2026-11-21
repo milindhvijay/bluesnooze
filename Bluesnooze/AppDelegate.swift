@@ -50,11 +50,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         wifiTurnedOff: settings.wifiRestoreOwed
     )
     private var notificationTokens: [NSObjectProtocol] = []
+    private var bluetoothFailureMenuItem: NSMenuItem?
+    private var wifiFailureMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         radios.requestBluetoothAccess()
         statusMenu.autoenablesItems = false
         statusMenu.delegate = self
+        setupFailureMenuItems()
         if !settings.hideIcon {
             showStatusItem()
         }
@@ -243,6 +246,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             action: settings.unlockAction(for: .wifi)
         )
 
+        updateFailureItem(bluetoothFailureMenuItem, failure: radios.bluetoothFailure)
+        updateFailureItem(wifiFailureMenuItem, failure: radios.wifiFailure)
+
         launchAtLoginMenuItem.state = menuState(LaunchAtLogin.isEnabled)
         hideIconMenuItem.state = menuState(settings.hideIcon)
         websiteMenuItem.toolTip = "Version \(appVersion)"
@@ -278,5 +284,33 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func menuState(_ value: Bool) -> NSControl.StateValue {
         return value ? .on : .off
+    }
+}
+
+private extension AppDelegate {
+    func setupFailureMenuItems() {
+        let bluetoothItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        bluetoothItem.isEnabled = false
+        bluetoothItem.isHidden = true
+        bluetoothMenuItem.submenu?.insertItem(bluetoothItem, at: 0)
+        bluetoothFailureMenuItem = bluetoothItem
+
+        let wifiItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        wifiItem.isEnabled = false
+        wifiItem.isHidden = true
+        wifiMenuItem.submenu?.insertItem(wifiItem, at: 0)
+        wifiFailureMenuItem = wifiItem
+    }
+
+    func updateFailureItem(_ item: NSMenuItem?, failure: String?) {
+        guard let item else {
+            return
+        }
+        if let failure {
+            item.title = "Last change failed: \(failure)"
+            item.isHidden = false
+        } else {
+            item.isHidden = true
+        }
     }
 }
