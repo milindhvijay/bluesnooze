@@ -87,11 +87,9 @@ final class RadioController: NSObject, CBCentralManagerDelegate {
             logger.error("Bluetooth is unavailable; cannot change power.")
             return
         }
-        guard bluetoothOn != powerOn else {
-            return
-        }
-        // Private API: see the decision record in Plane. The setter returns void
-        // and there is no public state to confirm, so this is best effort.
+        // The private setter has no readable state. bluetoothOn is a cached
+        // CoreBluetooth value that can be stale, and the policy already decides
+        // when a write is needed.
         IOBluetoothPreferenceSetControllerPowerState(powerOn ? 1 : 0)
     }
 
