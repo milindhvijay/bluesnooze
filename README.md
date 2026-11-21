@@ -1,6 +1,6 @@
 # Bluesnooze (fork)
 
-This fork is maintained at [milindhvijay/bluesnooze](https://github.com/milindhvijay/bluesnooze). Public releases are not published yet; build from source.
+This fork is maintained at [milindhvijay/bluesnooze](https://github.com/milindhvijay/bluesnooze). Download the latest release from [GitHub Releases](https://github.com/milindhvijay/bluesnooze/releases), or build from source.
 
 ## About
 
@@ -27,14 +27,16 @@ The app is menu-bar only. It has no windows, accounts, analytics or telemetry.
 
 Minimum macOS version: 26.0
 
-1. Open `Bluesnooze.xcodeproj` in Xcode 27.2 or later.
-2. Build the `Bluesnooze` scheme.
-3. Copy `Bluesnooze.app` to your `Applications` directory.
-4. Launch `Bluesnooze`.
+1. Download the latest `Bluesnooze-<version>.zip` from [GitHub Releases](https://github.com/milindhvijay/bluesnooze/releases/latest).
+2. Unzip it and move `Bluesnooze.app` to your `Applications` directory.
+3. Launch `Bluesnooze`. On the first launch macOS blocks the app because it is not notarised. Open **System Settings > Privacy & Security**, click **Open Anyway**, authenticate, then click **Open**.
+4. Allow Bluetooth when macOS asks.
 5. *Optional*: Configure <kbd>Wi-Fi</kbd> behaviour.
 6. *Optional*: Configure <kbd>Launch at login</kbd>. If macOS asks, approve Bluesnooze in System Settings > General > Login Items.
 
-Local builds are ad-hoc signed. macOS may ask for Bluetooth access again after a rebuild because the app's code signature changes.
+Each release is ad-hoc signed, so macOS treats an update as a different app. After replacing the app, allow Bluetooth again in **System Settings > Privacy & Security > Bluetooth** and re-enable **Launch at login** if you use it.
+
+The release assets include a SHA-256 checksum. Compare it with `shasum -a 256 Bluesnooze-<version>.zip`.
 
 ## Usage
 
@@ -45,6 +47,7 @@ Click the Bluesnooze icon in the menu bar. The Bluetooth and Wi-Fi submenus set 
 - The app has an option to hide the icon from the status bar. To show the icon again simply launch the application a second time.
 - Please note this app is not compatible with the “Allow your Apple Watch to unlock your Mac” feature.
 - Turning Wi-Fi off at sleep also disables Wake on LAN, Power Nap and network-based Find My while the Mac sleeps.
+- Releases are ad-hoc signed and not notarised, so macOS asks you to approve the first launch and may ask for Bluetooth access again after an update.
 - Unfortunately this app can't be distributed via the App Store because it uses a private API to switch Bluetooth on/off.
 
 ## Settings
@@ -89,9 +92,11 @@ swiftlint lint --strict
 xcodebuild -project Bluesnooze.xcodeproj -scheme Bluesnooze -configuration Release -destination 'platform=macOS' clean build
 ```
 
-The suite has 27 tests: 16 policy and 11 settings. The test target compiles `PowerPolicy.swift` and `SettingsStore.swift` directly; `AppDelegate` and `RadioController` are exercised manually. CI runs the test command on macOS 26 for pushes to `master`, pull requests and manual runs.
+The suite has 27 tests: 16 policy and 11 settings. The test target compiles `PowerPolicy.swift` and `SettingsStore.swift` directly; `AppDelegate` and `RadioController` are exercised manually. CI runs the test command on macOS 26 for pushes to `master`, pull requests and manual runs. A `v*` tag runs the release workflow, which tests, builds a universal Release, zips it, writes a checksum and publishes the GitHub release.
 
-The app is not notarised. TCC grants reset when the build changes, so a Bluetooth prompt after a rebuild is expected.
+To build a local app bundle, run the Release command above or build the `Bluesnooze` scheme in Xcode, then copy `Bluesnooze.app` to your `Applications` directory.
+
+Releases and local builds are ad-hoc signed. TCC grants reset when the signature changes, so a Bluetooth prompt after an update or rebuild is expected.
 
 ## License
 
