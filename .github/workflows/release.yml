@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-version
+
+      - name: Check the tag matches the app version
+        id: version
+        run: |
+          VERSION=$(xcodebuild -project Bluesnooze.xcodeproj -scheme Bluesnooze -configuration Release -showBuildSettings 2>/dev/null | awk '$1 == "MARKETING_VERSION" { print $3 }' | sort -u | head -n 1)
+          if [ -z "$VERSION" ]; then
+            echo "Could not read MARKETING_VERSION."
+            exit 1
+          fi
+          if [ "${GITHUB_REF_NAME#v}" != "$VERSION" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match MARKETING_VERSION ${VERSION}."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: xcodebuild -project Bluesnooze.xcodeproj -scheme Bluesnooze -destination 'platform=macOS' test
+
+      - name: Build Release
+        run: |
+          xcodebuild -project Bluesnooze.xcodeproj -scheme Bluesnooze \
+            -configuration Release -destination 'platform=macOS' \
+            -derivedDataPath build \
+            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" build
+
+      - name: Verify the app
+        run: |
+          APP=build/Build/Products/Release/Bluesnooze.app
+          test -d "$APP"
+          plutil -lint "$APP/Contents/Info.plist"
+          codesign --verify --deep --strict "$APP"
+          lipo -info "$APP/Contents/MacOS/Bluesnooze" | tee /tmp/archs.txt
+          grep -q arm64 /tmp/archs.txt
+          grep -q x86_64 /tmp/archs.txt
+          codesign -dvvv "$APP" 2>&1 | tee /tmp/signature.txt
+          grep -q 'flags=.*runtime' /tmp/signature.txt
+          # Ad-hoc builds are expected to be rejected by Gatekeeper.
+          spctl -a -vvv "$APP" || true
+
+      - name: Package
+        id: package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          APP=build/Build/Products/Release/Bluesnooze.app
+          ZIP="Bluesnooze-${VERSION}.zip"
+          ditto -c -k --keepParent --norsrc --noextattr "$APP" "$ZIP"
+          if unzip -l "$ZIP" | grep -qE '(\._|__MACOSX)'; then
+            echo "Archive contains AppleDouble files."
+            exit 1
+          fi
+          shasum -a 256 "$ZIP" > "$ZIP.sha256"
+          cat "$ZIP.sha256"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          ZIP: ${{ steps.package.outputs.zip }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$ZIP" "$ZIP.sha256" \
+            --verify-tag \
+            --title "Bluesnooze ${VERSION}" \
+            --notes "$(cat .github/release-notes.md)" \
+            --generate-notes
