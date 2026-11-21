@@ -32,6 +32,11 @@ struct PowerPolicy {
     private var bluetooth = Snapshot()
     private var wifi = Snapshot()
 
+    init(bluetoothTurnedOff: Bool = false, wifiTurnedOff: Bool = false) {
+        bluetooth.turnedOff = bluetoothTurnedOff
+        wifi.turnedOff = wifiTurnedOff
+    }
+
     mutating func sleep(settings: Settings, bluetoothOn: Bool, wifiOn: Bool) -> RadioActions {
         let bluetoothAction: RadioAction = settings.disableBluetoothOnPowerDown && bluetoothOn ? .turnOff : .nothing
         let wifiAction: RadioAction = settings.disableWifiOnPowerDown && wifiOn ? .turnOff : .nothing

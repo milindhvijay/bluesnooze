@@ -153,4 +153,35 @@ final class PowerPolicyTests: XCTestCase {
 
         XCTAssertEqual(actions, RadioActions(bluetooth: .nothing, wifi: .turnOn))
     }
+
+    func testRestoringAtLaunchTurnsOnRadiosLeftOff() {
+        var policy = PowerPolicy(bluetoothTurnedOff: true, wifiTurnedOff: true)
+
+        let actions = policy.unlock(settings: bothRestore)
+
+        XCTAssertEqual(actions, RadioActions(bluetooth: .turnOn, wifi: .turnOn))
+    }
+
+    func testRestoringAtLaunchRespectsNothing() {
+        let settings = PowerPolicy.Settings(
+            disableBluetoothOnPowerDown: true,
+            bluetoothActionOnScreenUnlock: .nothing,
+            disableWifiOnPowerDown: true,
+            wifiActionOnScreenUnlock: .nothing
+        )
+        var policy = PowerPolicy(bluetoothTurnedOff: true, wifiTurnedOff: true)
+
+        let actions = policy.unlock(settings: settings)
+
+        XCTAssertEqual(actions, RadioActions(bluetooth: .nothing, wifi: .nothing))
+    }
+
+    func testRestoreAtLaunchConsumesTheSnapshot() {
+        var policy = PowerPolicy(bluetoothTurnedOff: true, wifiTurnedOff: true)
+        _ = policy.unlock(settings: bothRestore)
+
+        let secondUnlock = policy.unlock(settings: bothRestore)
+
+        XCTAssertEqual(secondUnlock, RadioActions(bluetooth: .nothing, wifi: .nothing))
+    }
 }

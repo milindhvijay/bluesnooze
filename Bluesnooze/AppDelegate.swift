@@ -45,7 +45,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         nothingItem: wifiActionOnScreenUnlockNothing
     )
     private var statusItem: NSStatusItem?
-    private var powerPolicy = PowerPolicy()
+    private lazy var powerPolicy = PowerPolicy(
+        bluetoothTurnedOff: settings.bluetoothRestoreOwed,
+        wifiTurnedOff: settings.wifiRestoreOwed
+    )
     private var notificationTokens: [NSObjectProtocol] = []
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
@@ -55,6 +58,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !settings.hideIcon {
             showStatusItem()
         }
+        restoreRadiosIfNeeded()
         setupNotificationHandlers()
     }
 
@@ -172,6 +176,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    private func restoreRadiosIfNeeded() {
+        guard settings.bluetoothRestoreOwed || settings.wifiRestoreOwed else {
+            return
+        }
+        logger.notice("Restoring radios left off by the previous session")
+        onScreenUnlock()
+    }
+
     func onPowerDown() {
         let bluetoothOn = radios.bluetoothOn
         let wifiOn = radios.wifiOn
@@ -186,6 +198,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             actions: Bluetooth \(String(describing: actions.bluetooth), privacy: .public), \
             Wi-Fi \(String(describing: actions.wifi), privacy: .public)
             """)
+        if actions.bluetooth == .turnOff {
+            settings.bluetoothRestoreOwed = true
+        }
+        if actions.wifi == .turnOff {
+            settings.wifiRestoreOwed = true
+        }
         radios.apply(actions)
     }
 
@@ -196,6 +214,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Wi-Fi \(String(describing: actions.wifi), privacy: .public)
             """)
         radios.apply(actions)
+        settings.bluetoothRestoreOwed = false
+        settings.wifiRestoreOwed = false
     }
 
     func menuWillOpen(_ menu: NSMenu) {
