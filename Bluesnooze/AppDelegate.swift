@@ -54,7 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var wifiFailureMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        radios.requestBluetoothAccess()
+        requestBluetoothAccessIfNeeded()
         statusMenu.autoenablesItems = false
         statusMenu.delegate = self
         setupFailureMenuItems()
@@ -73,18 +73,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @IBAction func disableBluetoothOnPowerDownClicked(_ sender: NSMenuItem) {
         settings.setDisableOnSleep(!settings.isDisableOnSleep(for: .bluetooth), for: .bluetooth)
+        requestBluetoothAccessIfNeeded()
     }
 
     @IBAction func bluetoothActionOnScreenUnlockRestoreClicked(_ sender: NSMenuItem) {
         settings.setUnlockAction(.restore, for: .bluetooth)
+        requestBluetoothAccessIfNeeded()
     }
 
     @IBAction func bluetoothActionOnScreenUnlockEnableClicked(_ sender: NSMenuItem) {
         settings.setUnlockAction(.enable, for: .bluetooth)
+        requestBluetoothAccessIfNeeded()
     }
 
     @IBAction func bluetoothActionOnScreenUnlockNothingClicked(_ sender: NSMenuItem) {
         settings.setUnlockAction(.nothing, for: .bluetooth)
+        requestBluetoothAccessIfNeeded()
     }
 
     @IBAction func disableWifiOnPowerDownClicked(_ sender: NSMenuItem) {
@@ -185,6 +189,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         logger.notice("Restoring radios left off by the previous session")
         onScreenUnlock()
+    }
+
+    private func requestBluetoothAccessIfNeeded() {
+        guard settings.isDisableOnSleep(for: .bluetooth)
+            || settings.unlockAction(for: .bluetooth) != .nothing else {
+            return
+        }
+        radios.requestBluetoothAccess()
     }
 
     func onPowerDown() {
