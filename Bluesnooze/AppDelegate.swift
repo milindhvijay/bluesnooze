@@ -14,6 +14,7 @@ import os
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @IBOutlet weak var statusMenu: NSMenu!
+    @IBOutlet weak var bluetoothMenuItem: NSMenuItem!
     @IBOutlet weak var disableBluetoothOnPowerDownMenuItem: NSMenuItem!
     @IBOutlet weak var bluetoothActionOnScreenUnlockRestore: NSMenuItem!
     @IBOutlet weak var bluetoothActionOnScreenUnlockEnable: NSMenuItem!
@@ -46,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var powerPolicy = PowerPolicy()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        _ = radios
+        radios.requestBluetoothAccess()
         LaunchAtLogin.migrateIfNeeded() // Migrate to macOS 13 API (https://github.com/sindresorhus/LaunchAtLogin/releases/tag/v5.0.0)
         statusMenu.autoenablesItems = false
         statusMenu.delegate = self
@@ -167,6 +168,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func refreshMenuState() {
+        let bluetoothAvailable = radios.bluetoothAvailable
+        bluetoothMenuItem.isEnabled = bluetoothAvailable
+        bluetoothMenuItem.toolTip = bluetoothAvailable ? nil : "Bluetooth access is not available. Allow Bluesnooze in System Settings > Privacy & Security > Bluetooth."
         bluetoothMenu.update(
             featureEnabled: settings.isDisableOnSleep(for: .bluetooth),
             action: settings.unlockAction(for: .bluetooth)

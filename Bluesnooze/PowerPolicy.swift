@@ -26,7 +26,6 @@ struct PowerPolicy {
     }
 
     private struct Snapshot {
-        var wasOn = false
         var turnedOff = false
     }
 
@@ -37,8 +36,8 @@ struct PowerPolicy {
         let bluetoothAction: RadioAction = settings.disableBluetoothOnPowerDown && bluetoothOn ? .turnOff : .nothing
         let wifiAction: RadioAction = settings.disableWifiOnPowerDown && wifiOn ? .turnOff : .nothing
 
-        bluetooth = Snapshot(wasOn: bluetoothOn, turnedOff: bluetoothAction == .turnOff)
-        wifi = Snapshot(wasOn: wifiOn, turnedOff: wifiAction == .turnOff)
+        bluetooth.turnedOff = bluetooth.turnedOff || bluetoothAction == .turnOff
+        wifi.turnedOff = wifi.turnedOff || wifiAction == .turnOff
 
         return RadioActions(bluetooth: bluetoothAction, wifi: wifiAction)
     }
@@ -59,7 +58,7 @@ struct PowerPolicy {
         case .enable:
             return .turnOn
         case .restore:
-            return snapshot.turnedOff && snapshot.wasOn ? .turnOn : .nothing
+            return snapshot.turnedOff ? .turnOn : .nothing
         }
     }
 

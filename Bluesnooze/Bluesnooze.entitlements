@@ -6,6 +6,7 @@
 	<true/>
 	<key>com.apple.security.device.bluetooth</key>
 	<true/>
+	<!-- CoreWLAN needs network client to see the Wi-Fi interface under the sandbox. -->
 	<key>com.apple.security.network.client</key>
 	<true/>
 </dict>

@@ -26,6 +26,17 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store.hideIcon)
     }
 
+    func testKeyNamesAreThePublicContract() {
+        XCTAssertEqual(SettingsStore.Key.disableBluetoothOnPowerDown, "disableBluetoothOnPowerDown")
+        XCTAssertEqual(SettingsStore.Key.bluetoothActionOnScreenUnlock, "bluetoothActionOnScreenUnlock")
+        XCTAssertEqual(SettingsStore.Key.disableWifiOnPowerDown, "disableWifiOnPowerDown")
+        XCTAssertEqual(SettingsStore.Key.wifiActionOnScreenUnlock, "wifiActionOnScreenUnlock")
+        XCTAssertEqual(SettingsStore.Key.hideIcon, "hideIcon")
+
+        defaults.set("nothing", forKey: "wifiActionOnScreenUnlock")
+        XCTAssertEqual(store.unlockAction(for: .wifi), .nothing)
+    }
+
     func testActionReadWrite() {
         store.setUnlockAction(.enable, for: .bluetooth)
         store.setUnlockAction(.restore, for: .wifi)

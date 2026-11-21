@@ -3,21 +3,48 @@ import CoreWLAN
 import IOBluetooth // Links the framework that exports the private preference setter.
 import os
 
-final class RadioController {
+final class RadioController: NSObject, CBCentralManagerDelegate {
     private let logger: Logger
+    private var bluetoothState: CBManagerState = .unknown
     private lazy var bluetoothManager = CBCentralManager(
-        delegate: nil,
+        delegate: self,
         queue: nil,
         options: [CBCentralManagerOptionShowPowerAlertKey: false]
     )
 
     init(logger: Logger) {
         self.logger = logger
-        _ = bluetoothManager // Ask for Bluetooth access while the user is present.
+        super.init()
+    }
+
+    func requestBluetoothAccess() {
+        _ = bluetoothManager
+        bluetoothState = bluetoothManager.state
+    }
+
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        bluetoothState = central.state
+        if central.state == .unauthorized {
+            logger.error("Bluetooth access is denied. Allow Bluesnooze in System Settings > Privacy & Security > Bluetooth.")
+        }
     }
 
     var bluetoothOn: Bool {
-        return bluetoothManager.state == .poweredOn
+        return bluetoothState == .poweredOn
+    }
+
+    var bluetoothAvailable: Bool {
+        guard bluetoothState != .unsupported, bluetoothState != .unauthorized else {
+            return false
+        }
+        switch CBManager.authorization {
+        case .denied, .restricted:
+            return false
+        case .notDetermined, .allowedAlways:
+            return true
+        @unknown default:
+            return false
+        }
     }
 
     var wifiAvailable: Bool {
@@ -49,6 +76,10 @@ final class RadioController {
     }
 
     private func setBluetooth(_ powerOn: Bool) {
+        guard bluetoothAvailable else {
+            logger.error("Bluetooth is unavailable; cannot change power.")
+            return
+        }
         guard bluetoothOn != powerOn else {
             return
         }

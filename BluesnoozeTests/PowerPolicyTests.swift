@@ -129,6 +129,16 @@ final class PowerPolicyTests: XCTestCase {
         XCTAssertEqual(actions, RadioActions(bluetooth: .turnOn, wifi: .turnOn))
     }
 
+    func testSecondSleepKeepsTheSnapshotArmed() {
+        var policy = PowerPolicy()
+        _ = policy.sleep(settings: bothRestore, bluetoothOn: true, wifiOn: true)
+        _ = policy.sleep(settings: bothRestore, bluetoothOn: false, wifiOn: false)
+
+        let actions = policy.unlock(settings: bothRestore)
+
+        XCTAssertEqual(actions, RadioActions(bluetooth: .turnOn, wifi: .turnOn))
+    }
+
     func testCurrentSettingsControlTheUnlockAction() {
         var policy = PowerPolicy()
         _ = policy.sleep(settings: bothRestore, bluetoothOn: true, wifiOn: true)

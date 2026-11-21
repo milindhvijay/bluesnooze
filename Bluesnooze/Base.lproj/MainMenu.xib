@@ -15,6 +15,7 @@
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="Bluesnooze" customModuleProvider="target">
             <connections>
                 <outlet property="bluetoothActionOnScreenUnlockEnable" destination="k9U-YJ-Qra" id="iPK-GH-kd9"/>
+                <outlet property="bluetoothMenuItem" destination="MrC-mk-c9a" id="bt-menu-outlet"/>
                 <outlet property="bluetoothActionOnScreenUnlockNothing" destination="wwz-8o-dOW" id="kwY-c8-qPz"/>
                 <outlet property="bluetoothActionOnScreenUnlockRestore" destination="mBz-mB-SAw" id="dpV-qb-pVO"/>
                 <outlet property="disableBluetoothOnPowerDownMenuItem" destination="odn-aC-gVj" id="jsd-Lq-Mt0"/>
