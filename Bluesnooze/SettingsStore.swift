@@ -12,6 +12,8 @@ struct SettingsStore {
         static let disableWifiOnPowerDown = "disableWifiOnPowerDown"
         static let wifiActionOnScreenUnlock = "wifiActionOnScreenUnlock"
         static let hideIcon = "hideIcon"
+        static let bluetoothRestoreOwed = "bluetoothRestoreOwed"
+        static let wifiRestoreOwed = "wifiRestoreOwed"
     }
 
     private let defaults: UserDefaults
@@ -23,7 +25,9 @@ struct SettingsStore {
             Key.disableWifiOnPowerDown: false,
             Key.bluetoothActionOnScreenUnlock: defaultUnlockAction(for: .bluetooth).rawValue,
             Key.wifiActionOnScreenUnlock: defaultUnlockAction(for: .wifi).rawValue,
-            Key.hideIcon: false
+            Key.hideIcon: false,
+            Key.bluetoothRestoreOwed: false,
+            Key.wifiRestoreOwed: false
         ])
     }
 
@@ -33,6 +37,24 @@ struct SettingsStore {
         }
         set {
             defaults.set(newValue, forKey: Key.hideIcon)
+        }
+    }
+
+    var bluetoothRestoreOwed: Bool {
+        get {
+            return defaults.bool(forKey: Key.bluetoothRestoreOwed)
+        }
+        set {
+            defaults.set(newValue, forKey: Key.bluetoothRestoreOwed)
+        }
+    }
+
+    var wifiRestoreOwed: Bool {
+        get {
+            return defaults.bool(forKey: Key.wifiRestoreOwed)
+        }
+        set {
+            defaults.set(newValue, forKey: Key.wifiRestoreOwed)
         }
     }
 

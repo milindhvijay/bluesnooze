@@ -43,6 +43,10 @@ defaults read com.oliverpeate.Bluesnooze disableWifiOnPowerDown
 defaults read com.oliverpeate.Bluesnooze wifiActionOnScreenUnlock
 defaults read com.oliverpeate.Bluesnooze hideIcon
 
+# internal restore markers written by the app:
+defaults read com.oliverpeate.Bluesnooze bluetoothRestoreOwed
+defaults read com.oliverpeate.Bluesnooze wifiRestoreOwed
+
 # update settings:
 defaults write com.oliverpeate.Bluesnooze disableBluetoothOnPowerDown -bool false
 defaults write com.oliverpeate.Bluesnooze bluetoothActionOnScreenUnlock -string enable

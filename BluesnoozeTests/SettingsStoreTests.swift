@@ -32,6 +32,8 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(SettingsStore.Key.disableWifiOnPowerDown, "disableWifiOnPowerDown")
         XCTAssertEqual(SettingsStore.Key.wifiActionOnScreenUnlock, "wifiActionOnScreenUnlock")
         XCTAssertEqual(SettingsStore.Key.hideIcon, "hideIcon")
+        XCTAssertEqual(SettingsStore.Key.bluetoothRestoreOwed, "bluetoothRestoreOwed")
+        XCTAssertEqual(SettingsStore.Key.wifiRestoreOwed, "wifiRestoreOwed")
 
         defaults.set("nothing", forKey: "wifiActionOnScreenUnlock")
         XCTAssertEqual(store.unlockAction(for: .wifi), .nothing)
@@ -93,5 +95,24 @@ final class SettingsStoreTests: XCTestCase {
 
         store.hideIcon = false
         XCTAssertFalse(store.hideIcon)
+    }
+
+    func testRestoreFlagsDefaultToFalse() {
+        XCTAssertFalse(store.bluetoothRestoreOwed)
+        XCTAssertFalse(store.wifiRestoreOwed)
+    }
+
+    func testRestoreFlagsRoundTrip() {
+        store.bluetoothRestoreOwed = true
+        store.wifiRestoreOwed = true
+
+        XCTAssertTrue(store.bluetoothRestoreOwed)
+        XCTAssertTrue(store.wifiRestoreOwed)
+
+        store.bluetoothRestoreOwed = false
+        store.wifiRestoreOwed = false
+
+        XCTAssertFalse(store.bluetoothRestoreOwed)
+        XCTAssertFalse(store.wifiRestoreOwed)
     }
 }
